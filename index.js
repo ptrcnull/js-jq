@@ -37,18 +37,23 @@ function parseExpr(context, expr) {
 					const callee = parseExpr(context, expr.callee.object)
 					switch (methodName) {
 						case 'filter':
+						case 'map':
 							if (expr.arguments.length !== 1) {
-								fail('Array.prototype.filter accepts exactly 1 parameter')
+								fail('Array.prototype.' + methodName + ' accepts exactly 1 parameter')
 							}
 							const predicate = expr.arguments[0]
 							if (predicate.type !== 'ArrowFunctionExpression') {
-								fail('Array.prototype.filter predicate must an arrow function')
+								fail('Array.prototype.' + methodName + ' predicate must an arrow function')
 							}
 							if (predicate.params.length < 1) {
-								fail('Array.prototype.filter predicate must have at least 1 parameter')
+								fail('Array.prototype.' + methodName + ' predicate must have at least 1 parameter')
 							}
 							const itemName = predicate.params[0].name
-							return callee + ' | map(select(' + parseExpr(itemName, predicate.body) + '))'
+							if (methodName === 'filter') {
+								return callee + ' | map(select(' + parseExpr(itemName, predicate.body) + '))'
+							} else {
+								return callee + ' | map(' + parseExpr(itemName, predicate.body) + ')'
+							}
 						case 'slice':
 							return callee + `[${expr.arguments[0]?.value ?? ''}:${expr.arguments[1]?.value ?? ''}]`
 						default:
